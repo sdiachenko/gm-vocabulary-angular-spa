@@ -1,0 +1,12 @@
+<gm-data-loading-wrapper
+  class="gm-data-loading-wrapper_page-wrapper"
+  [loadingState]="authLoadingState()">
+  <mat-toolbar class="flex justify-between">
+    <span>GM Vocabulary</span>
+    <button matButton (click)="logout()">Logout</button>
+  </mat-toolbar>
+
+  <div class="grow">
+    <router-outlet />
+  </div>
+</gm-data-loading-wrapper>

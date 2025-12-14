@@ -1,0 +1,45 @@
+import User from '../models/user.model.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+
+export const signup = async (req, res) => {
+  bcrypt.hash(req.body.password, 10, async (err, hashedPassword) => {
+    try {
+      const user = new User({
+        email: req.body.email,
+        password: hashedPassword
+      });
+      await user.save();
+      res.status(201).json(user);
+    } catch (err) {
+      const message = err.code === 11000 ? 'User already exists' : err.message;
+      res.status(400).json({ message });
+    }
+  })
+};
+
+export const login = (req, res) => {
+  let fetchedUser;
+  User.findOne({ email: req.body.email })
+    .then((user) => {
+      if (!user) {
+        return res.status(401).json({ message: 'User does not exist' });
+      }
+      fetchedUser = user;
+      return bcrypt.compare(req.body.password, user.password);
+    })
+    .then(result => {
+      if (!result) {
+        return res.status(401).json({ message: 'Password does not match' });
+      }
+      const token = jwt.sign(
+        { email: fetchedUser.email, userId: fetchedUser._id },
+        'long_secret_string',
+        { expiresIn: '1h' }
+      );
+      res.status(200).json({token, expiresIn: 3600});
+    })
+    .catch((err) => {
+      return res.status(401).json({ message: err.message });
+    });
+};

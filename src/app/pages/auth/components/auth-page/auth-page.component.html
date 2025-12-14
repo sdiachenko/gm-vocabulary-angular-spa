@@ -1,0 +1,9 @@
+<gm-data-loading-wrapper
+  [loadingState]="authLoadingState()"
+  [error]="authErrorMessage()">
+  <gm-auth-form
+    [isSignupFormActive]="isSignupFormActive()"
+    (toggleView)="isSignupFormActive.set($event)"
+    (submitForm)="submit($event)"
+  ></gm-auth-form>
+</gm-data-loading-wrapper>

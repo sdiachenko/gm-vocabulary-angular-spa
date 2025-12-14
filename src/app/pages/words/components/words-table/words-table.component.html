@@ -1,0 +1,22 @@
+<div class="flex gap-4 pb-4">
+  <gm-button (btnClick)="addWord.emit()">Add</gm-button>
+
+  <gm-button
+    (btnClick)="editWord.emit(selectedWords[0])"
+    [isDisabled]="!selectedWords || selectedWords.length !== 1">
+    Edit
+  </gm-button>
+
+  <gm-button
+    (btnClick)="deleteWords.emit(selectedWords)"
+    [isDisabled]="!selectedWords || selectedWords.length === 0">
+    Delete
+  </gm-button>
+</div>
+
+<gm-table
+  class="grow"
+  [dataSource]="dataSource"
+  [columns]="wordsTableColumns"
+  (selectionChange)="selectedWords = $event"
+></gm-table>
