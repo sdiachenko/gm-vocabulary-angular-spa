@@ -1,0 +1,128 @@
+import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
+import { MatAutocomplete, MatAutocompleteTrigger, MatOption } from '@angular/material/autocomplete';
+import { MatError, MatFormField, MatInput, MatLabel } from '@angular/material/input';
+import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { LowerCasePipe } from '@angular/common';
+import { map } from 'rxjs';
+import {
+  Component,
+  computed,
+  Input,
+  OnChanges,
+  Self,
+  signal,
+  Signal,
+  SimpleChanges,
+  WritableSignal
+} from '@angular/core';
+
+import { SelectOption } from '../../interfaces/select-option';
+
+@UntilDestroy()
+@Component({
+  selector: 'gm-autocomplete',
+  imports: [
+    MatAutocomplete,
+    MatAutocompleteTrigger,
+    MatFormField,
+    MatInput,
+    MatLabel,
+    MatOption,
+    FormsModule,
+    LowerCasePipe,
+    ReactiveFormsModule,
+    MatError,
+  ],
+  templateUrl: './autocomplete.component.html',
+  styleUrl: './autocomplete.component.scss',
+})
+export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
+  @Input() fieldLabel: string;
+  @Input() fieldPlaceholder: string;
+  @Input() fieldErrors: string[];
+  @Input() options: SelectOption[];
+  @Input() allowCustomValue: boolean;
+
+  inputControl: UntypedFormControl;
+  onTouch: () => void;
+
+  private readonly inputControlValue: Signal<string>;
+  private readonly initialOptions: WritableSignal<SelectOption[]> = signal([]);
+  filteredOptions: Signal<SelectOption[]>;
+
+  constructor(@Self() public controlDir: NgControl) {
+    controlDir.valueAccessor = this;
+    this.inputControl = new UntypedFormControl();
+    this.inputControlValue = toSignal(this.inputControl.valueChanges, {initialValue: ''});
+    this.filteredOptions = computed(() => this.getFilteredOptions(this.inputControlValue(), this.initialOptions()));
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['options']?.currentValue) {
+      this.initialOptions.set(changes['options']?.currentValue);
+      if (this.inputControl.value != null && this.inputControl.value !== '') {
+        this.inputControl.setValue(this.getOptionNameById(this.inputControl.value));
+      }
+    }
+  }
+
+  writeValue(id: string) {
+    this.inputControl.setValue(this.options?.length > 0 ? this.getOptionNameById(id) || id : id);
+  }
+
+  registerOnChange(fn: any): void {
+    this.inputControl.valueChanges
+      .pipe(
+        untilDestroyed(this),
+        map((value: string) => {
+          const res = this.options?.length > 0 ? this.getOptionIdByName(value) || value : value;
+          console.log(res);
+          return res;
+        })
+      )
+      .subscribe(fn);
+  }
+
+  registerOnTouched(fn: any): void {
+    this.onTouch = fn;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    isDisabled ? this.inputControl.disable({emitEvent: false, onlySelf: true}) :
+      this.inputControl.enable({emitEvent: false, onlySelf: true});
+  }
+
+  private getFilteredOptions(value: string, options: SelectOption[]): SelectOption[] {
+    const filterValue = value.trim().toLowerCase();
+    if (filterValue === '') {
+      return options;
+    }
+
+    let filteredOptions: SelectOption[] = [];
+
+    if (options?.length > 0) {
+      filteredOptions = options.filter(option => option.name.toLowerCase().includes(filterValue));
+    }
+
+    if (this.allowCustomValue && value != '') {
+      const isUniqueValue = filteredOptions.length === 0 || filteredOptions.findIndex((option: SelectOption) => option.name.toLowerCase() === filterValue) === -1
+      if (isUniqueValue) {
+        filteredOptions.unshift({id: null, name: value, isCustom: true});
+      }
+    }
+    return filteredOptions;
+  }
+
+  private getOptionNameById(id: string): string {
+    return this.findOption('id', id)?.name;
+  }
+
+  private getOptionIdByName(name: string): string {
+    return this.findOption('name', name)?.id;
+  }
+
+  private findOption(parameter: string, value: string): SelectOption {
+    return this.options?.find(option => option[parameter] === value);
+  }
+}

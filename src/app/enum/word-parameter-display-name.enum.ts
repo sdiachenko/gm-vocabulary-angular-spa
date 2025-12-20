@@ -1,4 +1,5 @@
 export enum WordParameterDisplayNameEnum {
   WORD = 'Word',
-  TRANSLATION = 'Translation'
+  TRANSLATION = 'Translation',
+  COLLECTION_NAME = 'Collection name'
 }

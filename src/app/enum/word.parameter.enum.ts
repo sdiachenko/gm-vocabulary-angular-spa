@@ -1,4 +1,6 @@
 export enum WordParameterEnum {
   WORD = 'word',
-  TRANSLATION = 'translation'
+  TRANSLATION = 'translation',
+  COLLECTION_NAME = 'collectionName',
+  COLLECTION_ID = 'collectionId'
 }

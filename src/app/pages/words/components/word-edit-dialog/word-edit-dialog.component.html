@@ -1,23 +1,32 @@
 <gm-data-loading-wrapper
   [loadingState]="wordsUpdateIsLoading()"
   [error]="wordsUpdateErr()?.message">
-  <h2 mat-dialog-title> {{ data != null ? 'Edit' : 'Add' }} word</h2>
+  <h2 mat-dialog-title> {{ data.word != null ? 'Edit' : 'Add' }} word</h2>
 
   <mat-dialog-content>
     <form class="flex flex-col">
       <gm-input
-        [field]="wordForm.word"
+        [field]="wordForm[wordParameterEnum.WORD]"
         [fieldLabel]="wordParameterDisplayNameEnum.WORD"
         [fieldPlaceholder]="wordParameterDisplayNameEnum.WORD"
-        [fieldErrors]="wordForm.word().dirty() ? getFormFieldErrors(wordForm.word().errors() || []) : []"
+        [fieldErrors]="wordForm[wordParameterEnum.WORD]().dirty() ? getFormFieldErrors(wordForm[wordParameterEnum.WORD]().errors() || []) : []"
       ></gm-input>
 
       <gm-input
-        [field]="wordForm.translation"
+        [field]="wordForm[wordParameterEnum.TRANSLATION]"
         [fieldLabel]="wordParameterDisplayNameEnum.TRANSLATION"
         [fieldPlaceholder]="wordParameterDisplayNameEnum.TRANSLATION"
-        [fieldErrors]="wordForm.translation().dirty() ? getFormFieldErrors(wordForm.translation().errors() || []) : []"
+        [fieldErrors]="wordForm[wordParameterEnum.TRANSLATION]().dirty() ? getFormFieldErrors(wordForm[wordParameterEnum.TRANSLATION]().errors() || []) : []"
       ></gm-input>
+
+      <gm-autocomplete
+        [field]="wordForm[wordParameterEnum.COLLECTION_ID]"
+        [fieldLabel]="wordParameterDisplayNameEnum.COLLECTION_NAME"
+        [fieldPlaceholder]="wordParameterDisplayNameEnum.COLLECTION_NAME"
+        [fieldErrors]="wordForm[wordParameterEnum.COLLECTION_ID]().dirty() ? getFormFieldErrors(wordForm[wordParameterEnum.COLLECTION_ID]().errors() || []) : []"
+        [options]="data.collections"
+        [allowCustomValue]="true"
+      ></gm-autocomplete>
     </form>
   </mat-dialog-content>
 

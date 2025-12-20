@@ -1,13 +1,13 @@
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Component, inject, WritableSignal } from '@angular/core';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatButton } from '@angular/material/button';
-import { Component, inject, WritableSignal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { DataLoadingWrapper } from '../data-loading-wrapper/data-loading-wrapper';
 import { SubmitDialogComponent } from '../submit-dialog/submit-dialog.component';
 import { SubmitDialogData } from '../submit-dialog/submit-dialog-data';
 import { AuthService } from '../../../services/auth/auth.service';
-import { DataLoadingWrapper } from '../data-loading-wrapper/data-loading-wrapper';
 
 @Component({
   selector: 'gm-page-wrapper',

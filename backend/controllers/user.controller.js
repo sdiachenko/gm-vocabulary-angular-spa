@@ -37,7 +37,7 @@ export const login = (req, res) => {
         'long_secret_string',
         { expiresIn: '1h' }
       );
-      res.status(200).json({token, expiresIn: 3600});
+      res.status(200).json({token, expiresInSeconds: 3600});
     })
     .catch((err) => {
       return res.status(401).json({ message: err.message });

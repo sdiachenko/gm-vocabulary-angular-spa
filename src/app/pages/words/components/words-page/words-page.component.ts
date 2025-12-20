@@ -6,7 +6,9 @@ import { SubmitDialogComponent } from '../../../../shared/components/submit-dial
 import { SubmitDialogData } from '../../../../shared/components/submit-dialog/submit-dialog-data';
 import { WordEditDialogComponent } from '../word-edit-dialog/word-edit-dialog.component';
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
+import { WordEditDialogData } from '../word-edit-dialog/word-edit-dialog-data';
 import { WordsTableComponent } from '../words-table/words-table.component';
+import { SelectOption } from '../../../../shared/interfaces/select-option';
 import { WordsService } from '../../../../services/words/words.service';
 import { Word } from '../../../../interfaces/word';
 
@@ -25,6 +27,7 @@ export class WordsPageComponent implements OnDestroy {
   private dialog = inject(MatDialog);
 
   words: Signal<Word[]> = this.wordsService.words;
+  collections: Signal<SelectOption[]> = this.wordsService.collections;
   wordsResIsLoading: Signal<boolean> = this.wordsService.isLoading;
   wordsResErr: Signal<Error> = this.wordsService.error;
   deleteWordsIsLoading: WritableSignal<boolean> = signal(false);
@@ -34,8 +37,11 @@ export class WordsPageComponent implements OnDestroy {
   private wordsDeleteDialogRef!: MatDialogRef<any>;
 
   openEditDialog(word?: Word) {
-    this.wordEditDialogRef = this.dialog.open<WordEditDialogComponent, Word | {}>(WordEditDialogComponent, {
-      data: word ?? {}
+    this.wordEditDialogRef = this.dialog.open<WordEditDialogComponent, WordEditDialogData | {}>(WordEditDialogComponent, {
+      data: {
+        ...(word ?? {}),
+        collections: this.collections() ?? []
+      }
     });
   }
 

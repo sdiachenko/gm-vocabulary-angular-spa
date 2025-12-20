@@ -2,6 +2,8 @@ import { computed, inject, Injectable, signal, Signal, WritableSignal } from '@a
 import { catchError, Observable, tap, throwError } from 'rxjs';
 import { HttpResourceRef } from '@angular/common/http';
 
+import { SelectOption } from '../../shared/interfaces/select-option';
+import { WordParameterEnum } from '../../enum/word.parameter.enum';
 import { WordsApiService } from '../words-api/words-api.service';
 import { WordRequest } from '../../interfaces/word-request';
 import { Word } from '../../interfaces/word';
@@ -13,14 +15,30 @@ export class WordsService {
   private wordsApiService = inject(WordsApiService);
 
   wordsRes: HttpResourceRef<Word[]> = this.wordsApiService.words;
-  public isLoading: Signal<boolean> = this.wordsRes.isLoading;
-  public error: Signal<Error> = this.wordsRes.error;
+  isLoading: Signal<boolean> = this.wordsRes.isLoading;
+  error: Signal<Error> = this.wordsRes.error;
 
-  public updateIsLoading: WritableSignal<boolean> = signal(false);
-  public updateError: WritableSignal<Error> = signal(null);
+  updateIsLoading: WritableSignal<boolean> = signal(false);
+  updateError: WritableSignal<Error> = signal(null);
 
-  public words: Signal<Word[]> = computed(() => {
+  words: Signal<Word[]> = computed(() => {
     return this.wordsRes.value();
+  });
+
+  collections: Signal<SelectOption[]> = computed(() => {
+    return this.words()?.reduce((acc: SelectOption[], item: Word) => {
+      const collectionId = item[WordParameterEnum.COLLECTION_ID];
+      if (
+        collectionId != null
+        && acc.findIndex((accItem: SelectOption) => accItem.id === collectionId) === -1
+      ) {
+        acc.push({
+          id: collectionId,
+          name: item[WordParameterEnum.COLLECTION_NAME]
+        });
+      }
+      return acc;
+    }, []);
   });
 
   addWord(word: WordRequest): Observable<Word> {

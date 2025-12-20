@@ -1,6 +1,6 @@
+import { WordParameterDisplayNameEnum } from '../../../enum/word-parameter-display-name.enum';
 import { TableColumn } from '../../../shared/components/table/table-column';
 import { WordParameterEnum } from '../../../enum/word.parameter.enum';
-import { WordParameterDisplayNameEnum } from '../../../enum/word-parameter-display-name.enum';
 
 export const WordsTableColumns: TableColumn[] = [
   {
@@ -10,5 +10,9 @@ export const WordsTableColumns: TableColumn[] = [
   {
     name: WordParameterEnum.TRANSLATION,
     displayName: WordParameterDisplayNameEnum.TRANSLATION
+  },
+  {
+    name: WordParameterEnum.COLLECTION_NAME,
+    displayName: WordParameterDisplayNameEnum.COLLECTION_NAME
   }
 ];
