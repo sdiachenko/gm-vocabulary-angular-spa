@@ -3,7 +3,11 @@
   [loadingState]="authLoadingState()">
   <mat-toolbar class="flex justify-between">
     <span>GM Vocabulary</span>
-    <button matButton (click)="logout()">Logout</button>
+    <div class="flex">
+      <button matButton routerLink="/words" [queryParams]="{groupId: 'all'}" routerLinkActive="text-active pointer-events-none" [routerLinkActiveOptions]="{ exact: true }">Words</button>
+      <button matButton routerLink="/collections" routerLinkActive="text-active" [routerLinkActiveOptions]="{ exact: true }">Collections</button>
+      <button matButton (click)="logout()">Logout</button>
+    </div>
   </mat-toolbar>
 
   <div class="grow">

@@ -1,7 +1,8 @@
 import { ValidationErrors } from '@angular/forms';
-import { Injectable } from '@angular/core';
+import { computed, Injectable, Signal } from '@angular/core';
 
 import { FormFieldValidationMessagesConst } from '../../const/form-field-validation-messages.const';
+import { FieldTree, WithField } from '@angular/forms/signals';
 
 @Injectable({
   providedIn: 'root',
@@ -9,5 +10,15 @@ import { FormFieldValidationMessagesConst } from '../../const/form-field-validat
 export class FormFieldValidationService {
   getErrorsMessages(errors: ValidationErrors | null): string[] {
     return errors != null ? Object.keys(errors).map((key: string) => FormFieldValidationMessagesConst[key]): [];
+  }
+
+  isSignalFormValid<T>(form: FieldTree<T>): Signal<boolean> {
+    return computed(() => {
+      return Object.values(form).every((item: FieldTree<T>) => item().valid());
+    })
+  }
+
+  getSignalFormFieldErrorMessages(errors: WithField<any>[]): string[] {
+    return errors.map(error => error.message);
   }
 }

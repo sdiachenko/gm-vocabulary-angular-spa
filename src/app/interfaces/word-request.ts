@@ -1,7 +1,7 @@
-import { WordParameterEnum } from '../enum/word.parameter.enum';
-import { Collection } from './collection';
+import { WordParameterEnum } from '../enums/word.parameter.enum';
 
-export interface WordRequest extends Partial<Collection> {
+export interface WordRequest {
   [WordParameterEnum.WORD]: string;
   [WordParameterEnum.TRANSLATION]: string;
+  [WordParameterEnum.GROUP_IDS]: string[];
 }

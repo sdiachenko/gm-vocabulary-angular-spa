@@ -1,9 +1,7 @@
-import { computed, inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { catchError, Observable, tap, throwError } from 'rxjs';
 import { HttpResourceRef } from '@angular/common/http';
 
-import { SelectOption } from '../../shared/interfaces/select-option';
-import { WordParameterEnum } from '../../enum/word.parameter.enum';
 import { WordsApiService } from '../words-api/words-api.service';
 import { WordRequest } from '../../interfaces/word-request';
 import { Word } from '../../interfaces/word';
@@ -14,32 +12,17 @@ import { Word } from '../../interfaces/word';
 export class WordsService {
   private wordsApiService = inject(WordsApiService);
 
-  wordsRes: HttpResourceRef<Word[]> = this.wordsApiService.words;
-  isLoading: Signal<boolean> = this.wordsRes.isLoading;
-  error: Signal<Error> = this.wordsRes.error;
+  private readonly wordsRes: HttpResourceRef<Word[]> = this.wordsApiService.words;
+  words: Signal<Word[]> = this.wordsRes.value;
+
+  readonly fetchIsLoading: Signal<boolean> = this.wordsRes.isLoading;
+  readonly fetchError: Signal<Error> = this.wordsRes.error;
 
   updateIsLoading: WritableSignal<boolean> = signal(false);
   updateError: WritableSignal<Error> = signal(null);
 
-  words: Signal<Word[]> = computed(() => {
-    return this.wordsRes.value();
-  });
-
-  collections: Signal<SelectOption[]> = computed(() => {
-    return this.words()?.reduce((acc: SelectOption[], item: Word) => {
-      const collectionId = item[WordParameterEnum.COLLECTION_ID];
-      if (
-        collectionId != null
-        && acc.findIndex((accItem: SelectOption) => accItem.id === collectionId) === -1
-      ) {
-        acc.push({
-          id: collectionId,
-          name: item[WordParameterEnum.COLLECTION_NAME]
-        });
-      }
-      return acc;
-    }, []);
-  });
+  deleteIsLoading: WritableSignal<boolean> = signal(false);
+  deleteError: WritableSignal<Error> = signal(null);
 
   addWord(word: WordRequest): Observable<Word> {
     this.updateRequestState(null, true);
@@ -77,16 +60,21 @@ export class WordsService {
   }
 
   deleteWords(ids: string[]): Observable<void> {
-    this.updateRequestState(null, true);
+    const updateRequestState = (error: Error, isLoading: boolean): void => {
+      this.deleteError.set(error);
+      this.deleteIsLoading.set(isLoading);
+    }
+
+    updateRequestState(null, true);
     return this.wordsApiService.deleteWords(ids).pipe(
       tap(() => {
         this.wordsRes.update((wordList: Word[]) => {
           return wordList.filter((wordListItem: Word) => !ids.includes(wordListItem._id));
         });
-        this.updateRequestState(null, false)
+        updateRequestState(null, false)
       }),
       catchError(err => {
-        this.updateRequestState(err, false);
+        updateRequestState(err, false);
         return throwError(err);
       })
     );

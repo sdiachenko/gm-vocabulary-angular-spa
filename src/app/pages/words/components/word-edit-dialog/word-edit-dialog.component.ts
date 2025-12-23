@@ -1,6 +1,6 @@
-import { Component, computed, inject, Signal, signal, WritableSignal } from '@angular/core';
-import { Field, form, required, WithField } from '@angular/forms/signals'
-import { v4 as uuidv4 } from 'uuid';
+import { Component, inject, Signal, signal, WritableSignal } from '@angular/core';
+import { Field, FieldTree, form, required } from '@angular/forms/signals'
+import { defer, iif, of, switchMap } from 'rxjs';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -10,14 +10,21 @@ import {
 } from '@angular/material/dialog';
 
 import { DataLoadingWrapper } from '../../../../shared/components/data-loading-wrapper/data-loading-wrapper';
-import { AutocompleteComponent } from '../../../../shared/components/autocomplete/autocomplete.component';
-import { WordParameterDisplayNameEnum } from '../../../../enum/word-parameter-display-name.enum';
+import { ChipGridComponent } from '../../../../shared/components/chip-grid.component/chip-grid.component';
+import { WordParameterDisplayNameEnum } from '../../../../enums/word-parameter-display-name.enum';
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
+import { WordGroupService } from '../../../../services/word-group/word-group.service';
 import { InputComponent } from '../../../../shared/components/input/input.component';
-import { WordParameterEnum } from '../../../../enum/word.parameter.enum';
+import { WordGroupParameterEnum } from '../../../../enums/word-group.parameter.enum';
+import { WordGroupRequest } from '../../../../interfaces/word-group-request';
+import { WordParameterEnum } from '../../../../enums/word.parameter.enum';
 import { WordsService } from '../../../../services/words/words.service';
-import { WordRequest } from '../../../../interfaces/word-request';
+import { WordGroup } from '../../../../interfaces/word-group';
 import { WordEditDialogData } from './word-edit-dialog-data';
+import {
+  FormFieldValidationService
+} from '../../../../shared/services/form-field-validation/form-field-validation.service';
+import { WordForm } from './word-form';
 
 @Component({
   selector: 'gm-word-edit-dialog',
@@ -29,7 +36,7 @@ import { WordEditDialogData } from './word-edit-dialog-data';
     Field,
     InputComponent,
     DataLoadingWrapper,
-    AutocompleteComponent,
+    ChipGridComponent,
   ],
   templateUrl: './word-edit-dialog.component.html',
   styleUrl: './word-edit-dialog.component.scss',
@@ -37,7 +44,11 @@ import { WordEditDialogData } from './word-edit-dialog-data';
 export class WordEditDialogComponent {
   private dialogRef = inject(MatDialogRef<WordEditDialogData>);
   data: WordEditDialogData = inject<WordEditDialogData>(MAT_DIALOG_DATA);
-  private wordsService = inject(WordsService);
+
+  private readonly wordsService = inject(WordsService);
+  private readonly wordGroupService = inject(WordGroupService);
+  private readonly formFieldValidationService = inject(FormFieldValidationService);
+  private readonly wordGroups: Signal<WordGroup[]> = this.wordGroupService.groups;
 
   readonly wordParameterEnum = WordParameterEnum;
   readonly wordParameterDisplayNameEnum = WordParameterDisplayNameEnum;
@@ -45,57 +56,73 @@ export class WordEditDialogComponent {
   wordsUpdateIsLoading: Signal<boolean> = this.wordsService.updateIsLoading;
   wordsUpdateErr: Signal<Error> = this.wordsService.updateError;
 
-  private wordModel: WritableSignal<WordRequest> = signal<WordRequest>({
+  private wordModel: WritableSignal<WordForm> = signal<WordForm>({
     [WordParameterEnum.WORD]: this.data?.[WordParameterEnum.WORD] ?? '',
     [WordParameterEnum.TRANSLATION]: this.data?.[WordParameterEnum.TRANSLATION] ?? '',
-    [WordParameterEnum.COLLECTION_ID]: this.data?.[WordParameterEnum.COLLECTION_ID] ?? ''
+    [WordParameterEnum.GROUP_IDS]: this.data?.[WordParameterEnum.GROUP_IDS]?.join(', ') ?? ''
   });
 
-  wordForm = form(this.wordModel,  (schemaPath) => {
+  wordForm: FieldTree<WordForm> = form(this.wordModel,  (schemaPath) => {
     required(schemaPath[WordParameterEnum.WORD], { message: 'Word is required' })
     required(schemaPath[WordParameterEnum.TRANSLATION], { message: 'Translation is required' })
   });
 
+  isWordFormValid = this.formFieldValidationService.isSignalFormValid<WordForm>(this.wordForm);
+  getFormFieldErrors = this.formFieldValidationService.getSignalFormFieldErrorMessages;
+
   apply(): void {
-    let collectionId = this.wordModel()[WordParameterEnum.COLLECTION_ID];
-    let collectionName = collectionId ? this.data.collections.find(collection => collection.id === collectionId)?.name : null;
+    const selectedGroupsString = this.wordModel()[WordParameterEnum.GROUP_IDS];
+    const groupIds = selectedGroupsString != null && selectedGroupsString !== ''
+      ? selectedGroupsString.split(', ')
+      : null;
 
-    if (!collectionName && collectionId != null && collectionId !== '') {
-      collectionName = collectionId;
-      collectionId = uuidv4();
+    let newGroups: WordGroupRequest[];
+    if (groupIds?.length > 0) {
+      const existedGroupIds = this.wordGroups().map(({_id}) => _id);
+      newGroups = groupIds
+        .filter(id => !existedGroupIds.includes(id))
+        .map(groupName => ({
+          [WordGroupParameterEnum.NAME]: groupName
+        }));
     }
 
-    const word: WordRequest = {
-      ...this.wordModel(),
-      collectionName,
-      collectionId
-    }
-
-    if (this.data?._id != null) {
-      this.wordsService.updateWord(this.data._id, word).subscribe({
-        next: () => {
-          this.close();
+    iif(
+      () => newGroups?.length > 0,
+      defer(() => this.wordGroupService.addGroupSet(newGroups)),
+      of(null)
+    ).pipe(
+      switchMap(newGroupsRes => {
+        let updatedGroups: string[];
+        if (newGroupsRes?.length > 0) {
+          updatedGroups = groupIds.map(id => {
+            const newGroupId = newGroupsRes.find(newGroupRes => newGroupRes[WordGroupParameterEnum.NAME] === id)?.[WordGroupParameterEnum.ID];
+            if (newGroupId) {
+              return newGroupId;
+            }
+            return id;
+          });
         }
-      });
-      return;
-    }
 
-    this.wordsService.addWord(word).subscribe({
+        if (this.data?._id == null) {
+          return this.wordsService.addWord({
+            ...this.wordModel(),
+            [WordParameterEnum.GROUP_IDS]: updatedGroups || groupIds
+          });
+        }
+
+        return this.wordsService.updateWord(
+          this.data._id,
+          {
+            ...this.wordModel(),
+            [WordParameterEnum.GROUP_IDS]: updatedGroups || groupIds
+          }
+        );
+      })
+    ).subscribe({
       next: () => {
         this.close();
       }
     });
-  }
-
-  wordFormValid = computed(() => {
-    return [
-      this.wordForm[WordParameterEnum.WORD]().errors()?.length === 0,
-      this.wordForm[WordParameterEnum.TRANSLATION]().errors().length === 0
-    ].every(noError => noError)
-  });
-
-  getFormFieldErrors(errors: WithField<any>[]): string[] {
-    return errors.map(error => error.message);
   }
 
   close(): void {

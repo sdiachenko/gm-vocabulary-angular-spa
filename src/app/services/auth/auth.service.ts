@@ -17,7 +17,7 @@ export class AuthService {
 
   authState: WritableSignal<boolean> = signal(false);
   authLoadingState: WritableSignal<boolean> = signal(null);
-  authErrorMessage: WritableSignal<string> = signal(null);
+  authError: WritableSignal<Error> = signal(null);
   token: WritableSignal<string> = signal(null);
   private tokenTimer: ReturnType<typeof setTimeout>;
 
@@ -35,7 +35,7 @@ export class AuthService {
       untilDestroyed(this),
       catchError(err => {
         this.toggleAuthLoadingState(false);
-        this.authErrorMessage.set(err.message);
+        this.authError.set(err);
         return throwError(err);
       }),
       tap(() => {
@@ -83,7 +83,7 @@ export class AuthService {
   private setAuthTimer(durationInSeconds: number): void {
     this.tokenTimer = setTimeout(() => {
       this.logout();
-      this.authErrorMessage.set('Session expired');
+      this.authError.set(new Error('Session expired'));
     }, durationInSeconds * 1000);
   }
 
@@ -105,7 +105,7 @@ export class AuthService {
     localStorage.removeItem('expiresIn');
   }
 
-  private getAuthData(): { token: string; expiresIn: Date } {
+  getAuthData(): { token: string; expiresIn: Date } {
     const token = localStorage.getItem('token');
     const expiresIn = localStorage.getItem('expiresIn');
     if (!token || !expiresIn) {

@@ -1,0 +1,5 @@
+@import "helpers";
+
+.mat-mdc-button:not(:disabled).text-active {
+  @extend .text-active;
+}

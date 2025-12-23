@@ -27,7 +27,7 @@ export const updateWord = async (req, res) => {
       return res.status(404).json({ message: 'Word not found' });
     }
 
-    Word.updateOne({ _id: req.params.id }, word).then(() => {
+    Word.updateOne({ _id: req.params.id }, req.body).then(() => {
       res.status(200).json();
     });
   } catch (err) {

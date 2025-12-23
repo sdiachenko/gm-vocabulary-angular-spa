@@ -75,11 +75,7 @@ export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
     this.inputControl.valueChanges
       .pipe(
         untilDestroyed(this),
-        map((value: string) => {
-          const res = this.options?.length > 0 ? this.getOptionIdByName(value) || value : value;
-          console.log(res);
-          return res;
-        })
+        map((value: string) => this.options?.length > 0 ? this.getOptionIdByName(value) || value : value)
       )
       .subscribe(fn);
   }

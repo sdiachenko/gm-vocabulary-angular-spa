@@ -21,7 +21,7 @@ export class AuthPageComponent {
   private authService = inject(AuthService);
 
   authLoadingState: Signal<boolean> = this.authService.authLoadingState;
-  authErrorMessage: Signal<string> = this.authService.authErrorMessage;
+  authErrorMessage: Signal<Error> = this.authService.authError;
   isSignupFormActive: WritableSignal<boolean> = signal(false);
 
   submit(user: Auth) {

@@ -2,6 +2,7 @@ import bodyParser from 'body-parser';
 import express from 'express';
 import mongoose from 'mongoose';
 
+import wordGroupRoutes from './routes/wordGroup.routes.js';
 import wordRoutes from './routes/word.routes.js';
 import userRoutes from './routes/user.routes.js';
 
@@ -35,5 +36,6 @@ app.use((req, res, next) => {
 
 app.use('/api/user', userRoutes);
 app.use('/api/words', wordRoutes);
+app.use('/api/collections', wordGroupRoutes);
 
 export default app;

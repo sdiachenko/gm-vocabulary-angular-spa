@@ -14,7 +14,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class DataLoadingWrapper implements OnChanges {
 
   @Input() loadingState: boolean;
-  @Input() error: string;
+  @Input() error: Error;
+  @Input() successMessage: string;
 
   private _snackBar = inject(MatSnackBar);
 
@@ -23,7 +24,15 @@ export class DataLoadingWrapper implements OnChanges {
       if (this.error == null) {
         this._snackBar.dismiss();
       } else {
-        this._snackBar.open(this.error, 'Close');
+        this._snackBar.open(this.error.message, 'Close');
+      }
+    }
+
+    if (changes['successMessage'] != null) {
+      if (this.error == null) {
+        this._snackBar.dismiss();
+      } else {
+        this._snackBar.open(this.successMessage, 'Close');
       }
     }
   }

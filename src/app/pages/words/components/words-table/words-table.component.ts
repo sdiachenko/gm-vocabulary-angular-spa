@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { ButtonComponent } from "../../../../shared/components/button/button.component";
 import { TableComponent } from "../../../../shared/components/table/table.component";
-import { WordsTableColumns } from '../../const/words-table-columns.const';
-import { Word } from '../../../../interfaces/word';
+import { WordsTableColumns } from './words-table-columns.const';
+import { WordsTableRow } from './words-table-row';
 
 @Component({
   selector: 'gm-words-table',
@@ -16,12 +16,12 @@ import { Word } from '../../../../interfaces/word';
 })
 export class WordsTableComponent {
 
-  @Input() dataSource!: Word[];
+  @Input() dataSource!: WordsTableRow[];
 
   @Output() addWord = new EventEmitter();
-  @Output() editWord = new EventEmitter<Word>();
-  @Output() deleteWords = new EventEmitter<Word[]>();
+  @Output() editWord = new EventEmitter<WordsTableRow>();
+  @Output() deleteWords = new EventEmitter<WordsTableRow[]>();
 
   readonly wordsTableColumns = WordsTableColumns;
-  selectedWords!: Word[];
+  selectedWords!: WordsTableRow[];
 }

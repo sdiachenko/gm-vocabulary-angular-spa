@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
+import { Component, computed, inject, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
 import { DataLoadingWrapper } from '../../../../shared/components/data-loading-wrapper/data-loading-wrapper';
@@ -6,10 +6,14 @@ import { SubmitDialogComponent } from '../../../../shared/components/submit-dial
 import { SubmitDialogData } from '../../../../shared/components/submit-dialog/submit-dialog-data';
 import { WordEditDialogComponent } from '../word-edit-dialog/word-edit-dialog.component';
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
+import { WordGroupService } from '../../../../services/word-group/word-group.service';
+import { WordGroupParameterEnum } from '../../../../enums/word-group.parameter.enum';
 import { WordEditDialogData } from '../word-edit-dialog/word-edit-dialog-data';
 import { WordsTableComponent } from '../words-table/words-table.component';
 import { SelectOption } from '../../../../shared/interfaces/select-option';
+import { WordParameterEnum } from '../../../../enums/word.parameter.enum';
 import { WordsService } from '../../../../services/words/words.service';
+import { WordsTableRow } from '../words-table/words-table-row';
 import { Word } from '../../../../interfaces/word';
 
 @Component({
@@ -24,12 +28,32 @@ import { Word } from '../../../../interfaces/word';
 })
 export class WordsPageComponent implements OnDestroy {
   private wordsService = inject(WordsService);
+  private wordGroupService = inject(WordGroupService);
   private dialog = inject(MatDialog);
 
-  words: Signal<Word[]> = this.wordsService.words;
-  collections: Signal<SelectOption[]> = this.wordsService.collections;
-  wordsResIsLoading: Signal<boolean> = this.wordsService.isLoading;
-  wordsResErr: Signal<Error> = this.wordsService.error;
+  words: Signal<WordsTableRow[]> = computed(() => {
+    return this.wordsService.words().map(word => {
+      return {
+        ...word,
+        [WordParameterEnum.GROUP_NAMES]: word[WordParameterEnum.GROUP_IDS]?.map(groupId => {
+          return this.wordGroupService.groups()
+            .find(group => group[WordGroupParameterEnum.ID] === groupId)?.[WordGroupParameterEnum.NAME];
+        }),
+      }
+    });
+  });
+
+  wordGroups: Signal<SelectOption[]> = computed(() => {
+    return this.wordGroupService.groups().map((group) => {
+      return {
+        id: group[WordGroupParameterEnum.ID],
+        name: group[WordGroupParameterEnum.NAME]
+      }
+    })
+  });
+
+  wordsResIsLoading: Signal<boolean> = this.wordsService.fetchIsLoading;
+  wordsResErr: Signal<Error> = this.wordsService.fetchError;
   deleteWordsIsLoading: WritableSignal<boolean> = signal(false);
   deleteWordsError: WritableSignal<Error> = signal(null);
 
@@ -40,7 +64,7 @@ export class WordsPageComponent implements OnDestroy {
     this.wordEditDialogRef = this.dialog.open<WordEditDialogComponent, WordEditDialogData | {}>(WordEditDialogComponent, {
       data: {
         ...(word ?? {}),
-        collections: this.collections() ?? []
+        wordGroups: this.wordGroups() ?? []
       }
     });
   }
