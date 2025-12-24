@@ -5,6 +5,7 @@ import { MatToolbar } from '@angular/material/toolbar';
 import { MatButton } from '@angular/material/button';
 
 import { DataLoadingWrapper } from '../data-loading-wrapper/data-loading-wrapper';
+import { DefaultOptionValueEnum } from '../../../enums/default-option-value.enum';
 import { SubmitDialogComponent } from '../submit-dialog/submit-dialog.component';
 import { SubmitDialogData } from '../submit-dialog/submit-dialog-data';
 import { AuthService } from '../../../services/auth/auth.service';
@@ -28,6 +29,7 @@ export class PageWrapperComponent {
   private logoutDialogRef: MatDialogRef<SubmitDialogComponent, boolean>;
 
   authLoadingState: WritableSignal<boolean> = this.authService.authLoadingState;
+  defaultWordGroupsOptionValue = DefaultOptionValueEnum.GROUP_ID;
 
   logout(): void {
     this.logoutDialogRef = this.dialog.open<SubmitDialogComponent, SubmitDialogData, boolean>(SubmitDialogComponent, {

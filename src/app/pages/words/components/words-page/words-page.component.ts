@@ -1,5 +1,7 @@
-import { Component, computed, inject, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnDestroy, OnInit, Signal } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
 
 import { DataLoadingWrapper } from '../../../../shared/components/data-loading-wrapper/data-loading-wrapper';
 import { SubmitDialogComponent } from '../../../../shared/components/submit-dialog/submit-dialog.component';
@@ -26,12 +28,13 @@ import { Word } from '../../../../interfaces/word';
   templateUrl: './words-page.component.html',
   styleUrl: './words-page.component.scss',
 })
-export class WordsPageComponent implements OnDestroy {
-  private wordsService = inject(WordsService);
-  private wordGroupService = inject(WordGroupService);
-  private dialog = inject(MatDialog);
+export class WordsPageComponent implements OnInit, OnDestroy {
+  private readonly wordsService = inject(WordsService);
+  private readonly wordGroupService = inject(WordGroupService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
-  words: Signal<WordsTableRow[]> = computed(() => {
+  readonly words: Signal<WordsTableRow[]> = computed(() => {
     return this.wordsService.words().map(word => {
       return {
         ...word,
@@ -43,7 +46,7 @@ export class WordsPageComponent implements OnDestroy {
     });
   });
 
-  wordGroups: Signal<SelectOption[]> = computed(() => {
+  readonly wordGroups: Signal<SelectOption[]> = computed(() => {
     return this.wordGroupService.groups().map((group) => {
       return {
         id: group[WordGroupParameterEnum.ID],
@@ -52,13 +55,22 @@ export class WordsPageComponent implements OnDestroy {
     })
   });
 
-  wordsResIsLoading: Signal<boolean> = this.wordsService.fetchIsLoading;
-  wordsResErr: Signal<Error> = this.wordsService.fetchError;
-  deleteWordsIsLoading: WritableSignal<boolean> = signal(false);
-  deleteWordsError: WritableSignal<Error> = signal(null);
+  readonly fetchIsLoading: Signal<boolean> = this.wordsService.fetchIsLoading;
+  readonly fetchError: Signal<Error> = this.wordsService.fetchError;
+  readonly deleteIsLoading: Signal<boolean> = this.wordsService.deleteIsLoading;
+  readonly deleteError: Signal<Error> = this.wordsService.deleteError;
 
   private wordEditDialogRef!: MatDialogRef<any>;
   private wordsDeleteDialogRef!: MatDialogRef<any>;
+
+  ngOnInit(): void {
+    forkJoin([
+      this.wordsService.getWords(),
+      this.wordGroupService.getGroups()
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe();
+  }
 
   openEditDialog(word?: Word) {
     this.wordEditDialogRef = this.dialog.open<WordEditDialogComponent, WordEditDialogData | {}>(WordEditDialogComponent, {
@@ -79,26 +91,15 @@ export class WordsPageComponent implements OnDestroy {
 
     this.wordsDeleteDialogRef.afterClosed().subscribe(result => {
       if (result) {
-        updateRequestState(null, true);
-        this.wordsService.deleteWords(words.map(word => word._id)).subscribe({
-          next: () => {
-            updateRequestState(null, false);
-          },
-          error: err => {
-            updateRequestState(err, false);
-          }
-        });
+        this.wordsService.deleteWords(words.map(word => word[WordParameterEnum.ID])).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
       }
     });
-
-    const updateRequestState = (error: Error | null, isLoading: boolean) => {
-      this.deleteWordsError.set(error);
-      this.deleteWordsIsLoading.set(isLoading);
-    }
   }
 
   ngOnDestroy(): void {
     this.wordEditDialogRef?.close();
     this.wordsDeleteDialogRef?.close();
+    this.wordsService.resetStore();
+    this.wordGroupService.resetStore();
   }
 }

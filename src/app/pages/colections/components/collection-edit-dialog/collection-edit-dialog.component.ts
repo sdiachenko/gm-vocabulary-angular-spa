@@ -1,7 +1,7 @@
+import { Component, DestroyRef, inject, signal, WritableSignal } from '@angular/core';
 import { Field, FieldTree, form, required } from '@angular/forms/signals';
-import { Component, inject, signal, WritableSignal } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, iif } from 'rxjs';
 import {
   MAT_DIALOG_DATA,
@@ -24,7 +24,6 @@ import { WordGroupParameterEnum } from '../../../../enums/word-group.parameter.e
 import { WordGroupRequest } from '../../../../interfaces/word-group-request';
 import { WordGroup } from '../../../../interfaces/word-group';
 
-@UntilDestroy()
 @Component({
   selector: 'gm-collection-edit-dialog',
   imports: [
@@ -44,6 +43,7 @@ export class CollectionEditDialogComponent {
   private dialogRef = inject(MatDialogRef<WordGroup | void>);
   data: WordEditDialogData = inject<WordEditDialogData>(MAT_DIALOG_DATA);
 
+  private readonly destroyRef = inject(DestroyRef);
   private readonly wordGroupService = inject(WordGroupService);
   private readonly formFieldValidationService = inject(FormFieldValidationService);
 
@@ -71,7 +71,7 @@ export class CollectionEditDialogComponent {
       defer(() => this.wordGroupService.addGroup(this.formModel())),
       defer(() => this.wordGroupService.updateGroup(this.data._id, this.formModel()))
     )
-      .pipe(untilDestroyed(this))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.close();
       });

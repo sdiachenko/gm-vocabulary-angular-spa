@@ -1,10 +1,9 @@
 import { ControlValueAccessor, NgControl, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatError, MatFormField, MatInput, MatLabel } from '@angular/material/input';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { Component, Input, Self } from '@angular/core';
+import { Component, DestroyRef, inject, Input, Self } from '@angular/core';
 import { LowerCasePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
-@UntilDestroy()
 @Component({
   selector: 'gm-input',
   imports: [
@@ -19,6 +18,8 @@ import { LowerCasePipe } from '@angular/common';
   styleUrl: './input.component.scss',
 })
 export class InputComponent implements ControlValueAccessor {
+  private readonly destroyRef = inject(DestroyRef);
+
   @Input() fieldLabel: string;
   @Input() fieldPlaceholder: string;
   @Input() fieldType: string = 'text';
@@ -38,7 +39,7 @@ export class InputComponent implements ControlValueAccessor {
 
   registerOnChange(fn: any): void {
     this.inputControl.valueChanges
-      .pipe(untilDestroyed(this))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(fn);
   }
 

@@ -1,6 +1,6 @@
 <gm-data-loading-wrapper
-  [loadingState]="wordsResIsLoading() || deleteWordsIsLoading()"
-  [error]="wordsResErr() || deleteWordsError()">
+  [loadingState]="fetchIsLoading() || deleteIsLoading()"
+  [error]="fetchError() || deleteError()">
   @if (words() != null) {
     @if (words().length > 0) {
       <gm-words-table

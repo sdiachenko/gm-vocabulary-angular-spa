@@ -4,7 +4,7 @@
   <mat-toolbar class="flex justify-between">
     <span>GM Vocabulary</span>
     <div class="flex">
-      <button matButton routerLink="/words" [queryParams]="{groupId: 'all'}" routerLinkActive="text-active pointer-events-none" [routerLinkActiveOptions]="{ exact: true }">Words</button>
+      <button matButton routerLink="/words" [queryParams]="{groupId: defaultWordGroupsOptionValue}" routerLinkActive="text-active pointer-events-none" [routerLinkActiveOptions]="{ exact: true }">Words</button>
       <button matButton routerLink="/collections" routerLinkActive="text-active" [routerLinkActiveOptions]="{ exact: true }">Collections</button>
       <button matButton (click)="logout()">Logout</button>
     </div>

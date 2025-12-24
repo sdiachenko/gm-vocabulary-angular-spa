@@ -1,5 +1,5 @@
-import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -15,14 +15,16 @@ export class WordsApiService {
 
   private BASE_URL = `${environment.vocabularyApiUrl}/words`;
 
-  public words: HttpResourceRef<Word[]> = httpResource<Word[]>(() => this.BASE_URL, {defaultValue: []});
+  getWords(): Observable<Word[]> {
+    return this.http.get<Word[]>(this.BASE_URL);
+  }
 
   addWord(word: WordRequest): Observable<Word> {
     return this.http.post<Word>(this.BASE_URL, word);
   }
 
-  updateWord(id: string, word: WordRequest): Observable<Word> {
-    return this.http.put<Word>(`${this.BASE_URL}/${id}`, word);
+  updateWord(id: string, word: WordRequest): Observable<void> {
+    return this.http.put<void>(`${this.BASE_URL}/${id}`, word);
   }
 
   deleteWords(ids: string[]): Observable<void> {

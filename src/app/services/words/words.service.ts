@@ -1,22 +1,23 @@
 import { inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { HttpResourceRef } from '@angular/common/http';
 
+import { WordParameterEnum } from '../../enums/word.parameter.enum';
 import { WordsApiService } from '../words-api/words-api.service';
 import { WordRequest } from '../../interfaces/word-request';
+import { WordsStore } from '../../store/words.store';
 import { Word } from '../../interfaces/word';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WordsService {
-  private wordsApiService = inject(WordsApiService);
+  private readonly wordsApiService = inject(WordsApiService);
+  private readonly wordsStore = inject(WordsStore);
 
-  private readonly wordsRes: HttpResourceRef<Word[]> = this.wordsApiService.words;
-  words: Signal<Word[]> = this.wordsRes.value;
+  readonly words: Signal<Word[]> = this.wordsStore.words;
 
-  readonly fetchIsLoading: Signal<boolean> = this.wordsRes.isLoading;
-  readonly fetchError: Signal<Error> = this.wordsRes.error;
+  fetchIsLoading: WritableSignal<boolean> = signal(false);
+  fetchError: WritableSignal<Error> = signal(null);
 
   updateIsLoading: WritableSignal<boolean> = signal(false);
   updateError: WritableSignal<Error> = signal(null);
@@ -24,11 +25,29 @@ export class WordsService {
   deleteIsLoading: WritableSignal<boolean> = signal(false);
   deleteError: WritableSignal<Error> = signal(null);
 
+  getWords(): Observable<Word[]> {
+    const updateRequestState = (error: Error, isLoading: boolean): void => {
+      this.fetchError.set(error);
+      this.fetchIsLoading.set(isLoading);
+    }
+
+    return this.wordsApiService.getWords().pipe(
+      tap(result => {
+        this.wordsStore.addWords(result);
+        updateRequestState(null, false)
+      }),
+      catchError(err => {
+        updateRequestState(err, false)
+        return throwError(err);
+      })
+    );
+  }
+
   addWord(word: WordRequest): Observable<Word> {
     this.updateRequestState(null, true);
     return this.wordsApiService.addWord(word).pipe(
-      tap(result => {
-        this.wordsRes.update(current => [...current, result]);
+      tap((result: Word) => {
+        this.wordsStore.addWord(result);
         this.updateRequestState(null, false)
       }),
       catchError(err => {
@@ -38,17 +57,13 @@ export class WordsService {
     );
   }
 
-  updateWord(id: string, word: WordRequest): Observable<Word> {
+  updateWord(id: string, word: WordRequest): Observable<void> {
     this.updateRequestState(null, true);
     return this.wordsApiService.updateWord(id, word).pipe(
       tap(() => {
-        this.wordsRes.update((wordList: Word[]) => {
-          return wordList.map((wordListItem: Word) => {
-            if (wordListItem._id === id) {
-              return {...wordListItem, ...word};
-            }
-            return wordListItem;
-          });
+        this.wordsStore.updateWord({
+          ...word,
+          [WordParameterEnum.ID]: id
         });
         this.updateRequestState(null, false)
       }),
@@ -68,9 +83,7 @@ export class WordsService {
     updateRequestState(null, true);
     return this.wordsApiService.deleteWords(ids).pipe(
       tap(() => {
-        this.wordsRes.update((wordList: Word[]) => {
-          return wordList.filter((wordListItem: Word) => !ids.includes(wordListItem._id));
-        });
+        this.wordsStore.deleteWords(ids);
         updateRequestState(null, false)
       }),
       catchError(err => {
@@ -79,6 +92,8 @@ export class WordsService {
       })
     );
   }
+
+  resetStore = this.wordsStore.resetStore;
 
   private updateRequestState(error: Error, isLoading: boolean): void {
     this.updateError.set(error);

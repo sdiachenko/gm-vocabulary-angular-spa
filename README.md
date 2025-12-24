@@ -1,10 +1,16 @@
-# GmVocabularyAngularSpa
+# Vocabulary - MEAN SPA
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.0.1.
+## Tech Stack
+- Angular CLI v21
+- NgRx SignalStore
+- Node.js
+- MongoDB
+- Angular Material UI
+- Tailwind CSS
 
 ## Development server
 
-To start a local development server, run:
+To start a local development server, connect your mongodb in backend/app.js and run:
 
 ```bash
 ng serve

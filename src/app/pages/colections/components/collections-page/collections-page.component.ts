@@ -1,7 +1,7 @@
-import { Component, inject, OnDestroy, Signal, WritableSignal } from '@angular/core';
+import { Component, DestroyRef, inject, OnDestroy, OnInit, Signal, WritableSignal } from '@angular/core';
 import { MatCard, MatCardContent, MatCardTitle } from '@angular/material/card';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatMiniFabButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { NgTemplateOutlet } from '@angular/common';
@@ -16,7 +16,6 @@ import { SubmitDialogData } from '../../../../shared/components/submit-dialog/su
 import { WordGroupService } from '../../../../services/word-group/word-group.service';
 import { WordGroup } from '../../../../interfaces/word-group';
 
-@UntilDestroy()
 @Component({
   selector: 'gm-collections-page',
   imports: [
@@ -33,10 +32,11 @@ import { WordGroup } from '../../../../interfaces/word-group';
   templateUrl: './collections-page.component.html',
   styleUrl: './collections-page.component.scss',
 })
-export class CollectionsPageComponent implements OnDestroy {
+export class CollectionsPageComponent implements OnInit, OnDestroy {
 
   private readonly wordGroupService = inject(WordGroupService);
   readonly collections = this.wordGroupService.groups;
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly fetchIsLoading: Signal<boolean> = this.wordGroupService.fetchIsLoading;
   readonly fetchError: Signal<Error> = this.wordGroupService.fetchError;
@@ -46,6 +46,10 @@ export class CollectionsPageComponent implements OnDestroy {
   private dialog = inject(MatDialog);
   private editDialogRef: MatDialogRef<any>;
   private deleteDialogRef: MatDialogRef<any>;
+
+  ngOnInit(): void {
+    this.wordGroupService.getGroups().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  }
 
   openEditDialog(wordGroup?: WordGroup) {
     this.editDialogRef = this.dialog.open<CollectionEditDialogComponent, WordGroup | {}>(CollectionEditDialogComponent, {
@@ -64,7 +68,7 @@ export class CollectionsPageComponent implements OnDestroy {
     this.deleteDialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.wordGroupService.deleteGroup(wordGroupId)
-          .pipe(untilDestroyed(this), take(1))
+          .pipe(takeUntilDestroyed(this.destroyRef), take(1))
           .subscribe();
       }
     });
@@ -73,5 +77,6 @@ export class CollectionsPageComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.editDialogRef?.close();
     this.deleteDialogRef?.close();
+    this.wordGroupService.resetStore();
   }
 }

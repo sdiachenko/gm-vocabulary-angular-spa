@@ -1,9 +1,10 @@
 import { inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { catchError, Observable, tap, throwError } from 'rxjs';
-import { HttpResourceRef } from '@angular/common/http';
 
 import { WordGroupsApiService } from '../word-groups-api/word-groups-api.service';
+import { WordGroupParameterEnum } from '../../enums/word-group.parameter.enum';
 import { WordGroupRequest } from '../../interfaces/word-group-request';
+import { WordGroupsStore } from '../../store/word-groups.store';
 import { WordGroup } from '../../interfaces/word-group';
 
 @Injectable({
@@ -11,12 +12,12 @@ import { WordGroup } from '../../interfaces/word-group';
 })
 export class WordGroupService {
   private wordsApiService = inject(WordGroupsApiService);
+  private wordGroupsStore = inject(WordGroupsStore);
 
-  private readonly groupsRes: HttpResourceRef<WordGroup[]> = this.wordsApiService.groups;
-  readonly groups: Signal<WordGroup[]> = this.groupsRes.value;
+  readonly groups: Signal<WordGroup[]> = this.wordGroupsStore.groups;
 
-  readonly fetchIsLoading: Signal<boolean> = this.groupsRes.isLoading;
-  readonly fetchError: Signal<Error> = this.groupsRes.error;
+  fetchIsLoading: WritableSignal<boolean> = signal(false);
+  fetchError: WritableSignal<Error> = signal(null);
 
   updateIsLoading: WritableSignal<boolean> = signal(false);
   updateError: WritableSignal<Error> = signal(null);
@@ -24,11 +25,30 @@ export class WordGroupService {
   deleteIsLoading: WritableSignal<boolean> = signal(false);
   deleteError: WritableSignal<Error> = signal(null);
 
+  getGroups(): Observable<WordGroup[]> {
+    const updateRequestState = (error: Error, isLoading: boolean): void => {
+      this.fetchError.set(error);
+      this.fetchIsLoading.set(isLoading);
+    }
+
+    updateRequestState(null, true);
+    return this.wordsApiService.getGroups().pipe(
+      tap(response => {
+        this.wordGroupsStore.addGroups(response);
+        updateRequestState(null, false)
+      }),
+      catchError(err => {
+        updateRequestState(err, false)
+        return throwError(err);
+      })
+    );
+  }
+
   addGroup(word: WordGroupRequest): Observable<WordGroup> {
     this.updateRequestState(null, true);
     return this.wordsApiService.addGroup(word).pipe(
-      tap(result => {
-        this.groupsRes.update(current => [...current, result]);
+      tap(response => {
+        this.wordGroupsStore.addGroup(response);
         this.updateRequestState(null, false)
       }),
       catchError(err => {
@@ -41,8 +61,8 @@ export class WordGroupService {
   addGroupSet(groups: WordGroupRequest[]): Observable<WordGroup[]> {
     this.updateRequestState(null, true);
     return this.wordsApiService.addGroupSet(groups).pipe(
-      tap(result => {
-        this.groupsRes.update(current => [...current, ...result]);
+      tap(response => {
+        this.wordGroupsStore.addGroups(response);
         this.updateRequestState(null, false)
       }),
       catchError(err => {
@@ -52,17 +72,13 @@ export class WordGroupService {
     );
   }
 
-  updateGroup(id: string, group: WordGroupRequest): Observable<WordGroup> {
+  updateGroup(id: string, group: WordGroupRequest): Observable<void> {
     this.updateRequestState(null, true);
     return this.wordsApiService.updateGroup(id, group).pipe(
       tap(() => {
-        this.groupsRes.update((wordGroupList: WordGroup[]) => {
-          return wordGroupList.map((wordGroupListItem: WordGroup) => {
-            if (wordGroupListItem._id === id) {
-              return {...wordGroupListItem, ...group};
-            }
-            return wordGroupListItem;
-          });
+        this.wordGroupsStore.updateGroup({
+          ...group,
+          [WordGroupParameterEnum.ID]: id
         });
         this.updateRequestState(null, false)
       }),
@@ -82,9 +98,7 @@ export class WordGroupService {
     updateRequestState(null, true);
     return this.wordsApiService.deleteGroup(id).pipe(
       tap(() => {
-        this.groupsRes.update((wordGroupList: WordGroup[]) => {
-          return wordGroupList.filter((wordGroupListItem: WordGroup) => wordGroupListItem._id !== id);
-        });
+        this.wordGroupsStore.deleteGroup(id);
         updateRequestState(null, false)
       }),
       catchError(err => {
@@ -93,6 +107,8 @@ export class WordGroupService {
       })
     );
   }
+
+  resetStore = this.wordGroupsStore.resetStore;
 
   private updateRequestState(error: Error, isLoading: boolean): void {
     this.updateError.set(error);

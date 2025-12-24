@@ -1,19 +1,19 @@
 import { catchError, defer, iif, map, Observable, switchMap, take, tap, throwError } from 'rxjs';
-import { inject, Injectable, signal, WritableSignal } from '@angular/core';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
+import { DestroyRef, inject, Injectable, signal, WritableSignal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 
 import { AuthApiService } from '../auth-api/auth-api.service';
 import { LoginResponse } from '../auth-api/login-response';
 import { Auth } from '../auth-api/auth';
 
-@UntilDestroy()
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  private authApiService = inject(AuthApiService);
-  private router = inject(Router);
+  private readonly authApiService = inject(AuthApiService);
+  private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef)
 
   authState: WritableSignal<boolean> = signal(false);
   authLoadingState: WritableSignal<boolean> = signal(null);
@@ -32,7 +32,7 @@ export class AuthService {
       })
     ).pipe(
       take(1),
-      untilDestroyed(this),
+      takeUntilDestroyed(this.destroyRef),
       catchError(err => {
         this.toggleAuthLoadingState(false);
         this.authError.set(err);

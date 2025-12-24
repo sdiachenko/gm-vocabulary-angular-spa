@@ -1,13 +1,12 @@
 import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger, MatOption } from '@angular/material/autocomplete';
 import { MatError, MatFormField, MatInput, MatLabel } from '@angular/material/input';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { LowerCasePipe } from '@angular/common';
 import { map } from 'rxjs';
 import {
   Component,
-  computed,
+  computed, DestroyRef, inject,
   Input,
   OnChanges,
   Self,
@@ -19,7 +18,6 @@ import {
 
 import { SelectOption } from '../../interfaces/select-option';
 
-@UntilDestroy()
 @Component({
   selector: 'gm-autocomplete',
   imports: [
@@ -38,6 +36,8 @@ import { SelectOption } from '../../interfaces/select-option';
   styleUrl: './autocomplete.component.scss',
 })
 export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
+  private readonly destroyRef = inject(DestroyRef);
+
   @Input() fieldLabel: string;
   @Input() fieldPlaceholder: string;
   @Input() fieldErrors: string[];
@@ -74,7 +74,7 @@ export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
   registerOnChange(fn: any): void {
     this.inputControl.valueChanges
       .pipe(
-        untilDestroyed(this),
+        takeUntilDestroyed(this.destroyRef),
         map((value: string) => this.options?.length > 0 ? this.getOptionIdByName(value) || value : value)
       )
       .subscribe(fn);

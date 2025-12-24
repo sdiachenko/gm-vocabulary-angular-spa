@@ -1,8 +1,7 @@
 import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatChipGrid, MatChipInput, MatChipInputEvent, MatChipRow } from '@angular/material/chips';
 import { MatError, MatFormField, MatLabel } from '@angular/material/input';
-import { UntilDestroy, untilDestroyed } from '@ngneat/until-destroy';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatIcon } from '@angular/material/icon';
 import { LowerCasePipe } from '@angular/common';
@@ -15,7 +14,7 @@ import {
 import { map } from 'rxjs';
 import {
   Component,
-  computed,
+  computed, DestroyRef, inject,
   Input, model,
   OnChanges,
   Self,
@@ -28,7 +27,6 @@ import {
 
 import { SelectOption } from '../../interfaces/select-option';
 
-@UntilDestroy()
 @Component({
   selector: 'gm-chip-grid',
   imports: [
@@ -50,6 +48,8 @@ import { SelectOption } from '../../interfaces/select-option';
   styleUrl: './chip-grid.component.scss',
 })
 export class ChipGridComponent implements ControlValueAccessor, OnChanges {
+  private readonly destroyRef = inject(DestroyRef);
+
   @Input() fieldLabel: string;
   @Input() fieldPlaceholder: string;
   @Input() fieldErrors: string[];
@@ -89,7 +89,7 @@ export class ChipGridComponent implements ControlValueAccessor, OnChanges {
   registerOnChange(fn: any): void {
     this.inputControl.valueChanges
       .pipe(
-        untilDestroyed(this),
+        takeUntilDestroyed(this.destroyRef),
         map((value: string) => {
           return value.split(', ').map(chipName => this.getChipIdByName(chipName) || chipName).join(', ');
         })

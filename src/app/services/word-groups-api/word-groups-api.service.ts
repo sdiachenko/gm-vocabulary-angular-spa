@@ -1,5 +1,5 @@
-import { HttpClient, httpResource, HttpResourceRef } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 import { WordGroupRequest } from '../../interfaces/word-group-request';
@@ -14,18 +14,20 @@ export class WordGroupsApiService {
 
   private BASE_URL = `${environment.vocabularyApiUrl}/collections`;
 
-  public groups: HttpResourceRef<WordGroup[]> = httpResource<WordGroup[]>(() => this.BASE_URL, {defaultValue: []});
-
-  addGroup(word: WordGroupRequest): Observable<WordGroup> {
-    return this.http.post<WordGroup>(this.BASE_URL, word);
+  getGroups(): Observable<WordGroup[]> {
+    return this.http.get<WordGroup[]>(this.BASE_URL);
   }
 
-  addGroupSet(word: WordGroupRequest[]): Observable<WordGroup[]> {
-    return this.http.post<WordGroup[]>(`${this.BASE_URL}/bulk`, word);
+  addGroup(group: WordGroupRequest): Observable<WordGroup> {
+    return this.http.post<WordGroup>(this.BASE_URL, group);
   }
 
-  updateGroup(id: string, word: WordGroupRequest): Observable<WordGroup> {
-    return this.http.put<WordGroup>(`${this.BASE_URL}/${id}`, word);
+  addGroupSet(group: WordGroupRequest[]): Observable<WordGroup[]> {
+    return this.http.post<WordGroup[]>(`${this.BASE_URL}/bulk`, group);
+  }
+
+  updateGroup(id: string, group: WordGroupRequest): Observable<void> {
+    return this.http.put<void>(`${this.BASE_URL}/${id}`, group);
   }
 
   deleteGroup(id: string): Observable<void> {
