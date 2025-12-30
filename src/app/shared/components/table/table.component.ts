@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { MatCheckbox } from '@angular/material/checkbox';
 import {
@@ -33,21 +33,26 @@ import { TableColumn } from './table-column';
   ],
   templateUrl: './table.component.html',
   styleUrl: './table.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TableComponent {
-  @Input() columns!: TableColumn[];
-  @Input() dataSource!: any[];
-  @Output() selectionChange = new EventEmitter();
+  columns = input<TableColumn[]>([]);
+  dataSource = input<any[]>([]);
+  allowEdit = input<boolean>(true);
+  selectionChange = output<any[]>();
 
   get columnsNames(){
-    return ['select', ...(this.columns?.map(({name}) => name) || [])];
+    return [
+      ...(this.allowEdit() ? ['select'] : []),
+      ...(this.columns()?.map(({name}) => name) || [])
+    ];
   };
 
   selection = new SelectionModel<any>(true, []);
 
   isAllSelected() {
     const numSelected = this.selection.selected.length;
-    const numRows = this.dataSource.length;
+    const numRows = this.dataSource().length;
     return numSelected === numRows;
   }
 
@@ -58,7 +63,7 @@ export class TableComponent {
       return;
     }
 
-    this.selection.select(...this.dataSource);
+    this.selection.select(...this.dataSource());
     this.selectionChange.emit(this.selection.selected);
   }
 

@@ -1,9 +1,10 @@
-import { inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
+import { computed, inject, Injectable, signal, Signal, WritableSignal } from '@angular/core';
 import { catchError, Observable, tap, throwError } from 'rxjs';
 
 import { WordGroupsApiService } from '../word-groups-api/word-groups-api.service';
 import { WordGroupParameterEnum } from '../../enums/word-group.parameter.enum';
 import { WordGroupRequest } from '../../interfaces/word-group-request';
+import { SelectOption } from '../../shared/interfaces/select-option';
 import { WordGroupsStore } from '../../store/word-groups.store';
 import { WordGroup } from '../../interfaces/word-group';
 
@@ -15,6 +16,7 @@ export class WordGroupService {
   private wordGroupsStore = inject(WordGroupsStore);
 
   readonly groups: Signal<WordGroup[]> = this.wordGroupsStore.groups;
+  readonly sharedGroups: Signal<WordGroup[]> = this.wordGroupsStore.sharedGroups;
 
   fetchIsLoading: WritableSignal<boolean> = signal(false);
   fetchError: WritableSignal<Error> = signal(null);
@@ -25,20 +27,58 @@ export class WordGroupService {
   deleteIsLoading: WritableSignal<boolean> = signal(false);
   deleteError: WritableSignal<Error> = signal(null);
 
-  getGroups(): Observable<WordGroup[]> {
+  getUserGroups(): Observable<WordGroup[]> {
     const updateRequestState = (error: Error, isLoading: boolean): void => {
       this.fetchError.set(error);
       this.fetchIsLoading.set(isLoading);
     }
 
     updateRequestState(null, true);
-    return this.wordsApiService.getGroups().pipe(
-      tap(response => {
-        this.wordGroupsStore.addGroups(response);
+    return this.wordsApiService.getUserGroups().pipe(
+      tap(groups => {
+        this.wordGroupsStore.addGroups(groups);
         updateRequestState(null, false)
       }),
       catchError(err => {
-        updateRequestState(err, false)
+        updateRequestState(new Error(err.error?.message ?? err.message), false)
+        return throwError(err);
+      })
+    );
+  }
+
+  getSharedGroups(): Observable<WordGroup[]> {
+    const updateRequestState = (error: Error, isLoading: boolean): void => {
+      this.fetchError.set(error);
+      this.fetchIsLoading.set(isLoading);
+    }
+
+    updateRequestState(null, true);
+    return this.wordsApiService.getSharedGroups().pipe(
+      tap(groups => {
+        this.wordGroupsStore.addSharedGroups(groups);
+        updateRequestState(null, false)
+      }),
+      catchError(err => {
+        updateRequestState(new Error(err.error?.message ?? err.message), false)
+        return throwError(err);
+      })
+    );
+  }
+
+  getGroup(id: string): Observable<WordGroup> {
+    const updateRequestState = (error: Error, isLoading: boolean): void => {
+      this.fetchError.set(error);
+      this.fetchIsLoading.set(isLoading);
+    }
+
+    updateRequestState(null, true);
+    return this.wordsApiService.getGroup(id).pipe(
+      tap(group => {
+        this.wordGroupsStore.addGroup(group);
+        updateRequestState(null, false)
+      }),
+      catchError(err => {
+        updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -52,7 +92,7 @@ export class WordGroupService {
         this.updateRequestState(null, false)
       }),
       catchError(err => {
-        this.updateRequestState(err, false)
+        this.updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -66,7 +106,7 @@ export class WordGroupService {
         this.updateRequestState(null, false)
       }),
       catchError(err => {
-        this.updateRequestState(err, false)
+        this.updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -83,7 +123,7 @@ export class WordGroupService {
         this.updateRequestState(null, false)
       }),
       catchError(err => {
-        this.updateRequestState(err, false)
+        this.updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -102,11 +142,26 @@ export class WordGroupService {
         updateRequestState(null, false)
       }),
       catchError(err => {
-        updateRequestState(err, false);
+        updateRequestState(new Error(err.error?.message ?? err.message), false);
         return throwError(err);
       })
     );
   }
+
+  getGroupNameById(id: Signal<string>): Signal<string> {
+    return computed(() => {
+      return this.groups()?.find(group => group[WordGroupParameterEnum.ID] === id())?.[WordGroupParameterEnum.NAME];
+    });
+  }
+
+  getWordGroupOptions: Signal<SelectOption[]> = computed(() => {
+    return this.groups().map((group) => {
+      return {
+        id: group[WordGroupParameterEnum.ID],
+        name: group[WordGroupParameterEnum.NAME]
+      }
+    })
+  });
 
   resetStore = this.wordGroupsStore.resetStore;
 

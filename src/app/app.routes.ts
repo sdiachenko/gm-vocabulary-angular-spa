@@ -1,14 +1,18 @@
 import { Routes } from '@angular/router';
 
-import { CollectionsPageComponent } from './pages/colections/components/collections-page/collections-page.component';
+import { CollectionsPageComponent } from './features/colections/components/collections-page/collections-page.component';
+import {
+  SingleCollectionPageComponent
+} from './features/colections/components/single-collection-page/single-collection-page.component';
+import { WordsPageComponent } from './features/words/components/words-page/words-page.component';
 import { PageWrapperComponent } from './shared/components/page-wrapper/page-wrapper.component';
-import { WordsPageComponent } from './pages/words/components/words-page/words-page.component';
-import { AuthPageComponent } from './pages/auth/components/auth-page/auth-page.component';
+import { AuthPageComponent } from './features/auth/components/auth-page/auth-page.component';
 import { authGuard } from './guards/auth/auth-guard';
 
 export const routes: Routes = [
   {
     path: 'auth',
+    title: 'GM Vocabulary',
     component: AuthPageComponent
   },
   {
@@ -22,13 +26,25 @@ export const routes: Routes = [
       },
       {
         path: 'words',
+        title: 'My Words',
         component: WordsPageComponent,
         canActivate: [authGuard]
       },
       {
         path: 'collections',
-        component: CollectionsPageComponent,
-        canActivate: [authGuard]
+        canActivate: [authGuard],
+        children: [
+          {
+            path: '',
+            title: 'Library',
+            component: CollectionsPageComponent
+          },
+          {
+            path: ':collectionId',
+            title: 'Collection',
+            component: SingleCollectionPageComponent
+          }
+        ]
       }
     ]
   }

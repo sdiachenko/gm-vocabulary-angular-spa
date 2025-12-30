@@ -1,15 +1,15 @@
 <mat-form-field appearance="fill" class="w-full">
-  <mat-label>{{fieldLabel}}</mat-label>
+  <mat-label>{{fieldLabel()}}</mat-label>
   <input
     matInput
     [formControl]="inputControl"
-    [type]="fieldType"
-    [placeholder]="fieldPlaceholder || 'Enter ' + (fieldLabel | lowercase)">
+    [type]="fieldType()"
+    [placeholder]="fieldPlaceholder() || 'Enter ' + (fieldLabel() | lowercase)">
 </mat-form-field>
 
-@if (fieldErrors != null && fieldErrors.length > 0) {
+@if (fieldErrors() != null && fieldErrors().length > 0) {
   <div class="field-errors">
-    @for (error of fieldErrors; track $index) {
+    @for (error of fieldErrors(); track $index) {
       <mat-error>{{error}}</mat-error>
     }
   </div>

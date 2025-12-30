@@ -10,11 +10,10 @@ export interface WordsState {
   groupId: string;
 }
 
-
 export const initialState: WordsState = {
   words: [],
   queryString: '',
-  groupId: DefaultOptionValueEnum.GROUP_ID
+  groupId: DefaultOptionValueEnum.ALL
 }
 
 export const WordsStore = signalStore(
@@ -26,8 +25,8 @@ export const WordsStore = signalStore(
       const queryString = store.queryString().toLowerCase();
 
       return store.words().filter(storeWord => {
-        const hasValidGroupId = groupId == null || groupId === DefaultOptionValueEnum.GROUP_ID
-          || storeWord[WordParameterEnum.GROUP_IDS].includes(groupId);
+        const hasValidGroupId = groupId == null || groupId === DefaultOptionValueEnum.ALL
+          || storeWord[WordParameterEnum.GROUP_ID]?.includes(groupId);
 
         const hasValidNameOrTranslation = queryString == null || queryString === ''
           || storeWord[WordParameterEnum.WORD].toLowerCase().includes(queryString)
@@ -61,6 +60,11 @@ export const WordsStore = signalStore(
     deleteWords(ids: string[]) {
       patchState(store, {
         words: store.words().filter(storeWord => !ids.includes(storeWord[WordParameterEnum.ID]))
+      })
+    },
+    filterByGroupId(id: string) {
+      patchState(store, {
+        groupId: id
       })
     },
     resetStore() {

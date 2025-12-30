@@ -1,8 +1,10 @@
-<mat-form-field class="w-full">
-  <mat-label>{{fieldLabel}}</mat-label>
+<mat-form-field
+  class="w-full"
+  [ngClass]="{'mat-mdc-form-field_disabled': inputControl.disabled}">
+  <mat-label>{{fieldLabel()}}</mat-label>
   <input [formControl]="inputControl"
          type="string"
-         [placeholder]="fieldPlaceholder || 'Enter ' + (fieldLabel | lowercase)"
+         [placeholder]="fieldPlaceholder() || 'Enter ' + (fieldLabel() | lowercase)"
          matInput
          [matAutocomplete]="auto">
   <mat-autocomplete #auto="matAutocomplete" autoActiveFirstOption>
@@ -17,9 +19,9 @@
   </mat-autocomplete>
 </mat-form-field>
 
-@if (fieldErrors != null && fieldErrors.length > 0) {
+@if (fieldErrors() != null && fieldErrors().length > 0) {
   <div class="field-errors">
-    @for (error of fieldErrors; track $index) {
+    @for (error of fieldErrors(); track $index) {
       <mat-error>{{error}}</mat-error>
     }
   </div>

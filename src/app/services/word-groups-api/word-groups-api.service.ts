@@ -10,12 +10,20 @@ import { WordGroup } from '../../interfaces/word-group';
   providedIn: 'root',
 })
 export class WordGroupsApiService {
-  private http = inject(HttpClient);
+  private readonly http = inject(HttpClient);
 
-  private BASE_URL = `${environment.vocabularyApiUrl}/collections`;
+  private readonly BASE_URL = `${environment.vocabularyApiUrl}/collections`;
 
-  getGroups(): Observable<WordGroup[]> {
+  getUserGroups(): Observable<WordGroup[]> {
     return this.http.get<WordGroup[]>(this.BASE_URL);
+  }
+
+  getSharedGroups(): Observable<WordGroup[]> {
+    return this.http.get<WordGroup[]>(`${this.BASE_URL}/shared`);
+  }
+
+  getGroup(id: string): Observable<WordGroup> {
+    return this.http.get<WordGroup>(`${this.BASE_URL}/${id}`);
   }
 
   addGroup(group: WordGroupRequest): Observable<WordGroup> {

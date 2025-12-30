@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import {
   MAT_DIALOG_DATA,
   MatDialogActions,
@@ -20,6 +20,7 @@ import { SubmitDialogData } from './submit-dialog-data';
   ],
   templateUrl: './submit-dialog.component.html',
   styleUrl: './submit-dialog.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SubmitDialogComponent {
   dialogRef = inject(MatDialogRef<SubmitDialogData>);

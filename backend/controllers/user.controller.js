@@ -10,10 +10,11 @@ export const signup = async (req, res) => {
         password: hashedPassword
       });
       await user.save();
-      res.status(201).json(user);
+      return res.status(201).json(user);
+
     } catch (err) {
       const message = err.code === 11000 ? 'User already exists' : err.message;
-      res.status(400).json({ message });
+      return res.status(400).json({ message });
     }
   })
 };
@@ -37,7 +38,7 @@ export const login = (req, res) => {
         'long_secret_string',
         { expiresIn: '1h' }
       );
-      res.status(200).json({token, expiresInSeconds: 3600});
+      return res.status(200).json({token, expiresInSeconds: 3600, userId: fetchedUser._id});
     })
     .catch((err) => {
       return res.status(401).json({ message: err.message });

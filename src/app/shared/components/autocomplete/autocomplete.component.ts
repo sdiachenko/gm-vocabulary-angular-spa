@@ -2,12 +2,15 @@ import { ControlValueAccessor, FormsModule, NgControl, ReactiveFormsModule, Unty
 import { MatAutocomplete, MatAutocompleteTrigger, MatOption } from '@angular/material/autocomplete';
 import { MatError, MatFormField, MatInput, MatLabel } from '@angular/material/input';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { LowerCasePipe } from '@angular/common';
+import { LowerCasePipe, NgClass } from '@angular/common';
 import { map } from 'rxjs';
 import {
+  ChangeDetectionStrategy,
   Component,
-  computed, DestroyRef, inject,
-  Input,
+  computed,
+  DestroyRef,
+  inject,
+  input,
   OnChanges,
   Self,
   signal,
@@ -31,18 +34,20 @@ import { SelectOption } from '../../interfaces/select-option';
     LowerCasePipe,
     ReactiveFormsModule,
     MatError,
+    NgClass,
   ],
   templateUrl: './autocomplete.component.html',
   styleUrl: './autocomplete.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
   private readonly destroyRef = inject(DestroyRef);
 
-  @Input() fieldLabel: string;
-  @Input() fieldPlaceholder: string;
-  @Input() fieldErrors: string[];
-  @Input() options: SelectOption[];
-  @Input() allowCustomValue: boolean;
+  fieldLabel = input<string>(null);
+  fieldPlaceholder = input<string>(null);
+  fieldErrors = input<string[]>([]);
+  options = input<SelectOption[]>([]);
+  allowCustomValue = input<boolean>(false);
 
   inputControl: UntypedFormControl;
   onTouch: () => void;
@@ -60,22 +65,25 @@ export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['options']?.currentValue) {
-      this.initialOptions.set(changes['options']?.currentValue);
+      this.initialOptions.set(this.options());
       if (this.inputControl.value != null && this.inputControl.value !== '') {
-        this.inputControl.setValue(this.getOptionNameById(this.inputControl.value));
+        this.inputControl.setValue(this.getOptionNameById(this.inputControl.value), {emitEvent: false});
       }
     }
   }
 
   writeValue(id: string) {
-    this.inputControl.setValue(this.options?.length > 0 ? this.getOptionNameById(id) || id : id);
+    this.inputControl.setValue(this.options?.length > 0 ? this.getOptionNameById(id) || id : id, {emitEvent: false});
   }
 
   registerOnChange(fn: any): void {
     this.inputControl.valueChanges
       .pipe(
         takeUntilDestroyed(this.destroyRef),
-        map((value: string) => this.options?.length > 0 ? this.getOptionIdByName(value) || value : value)
+        map((value: string) => {
+          console.log(this.options?.length > 0 ? this.getOptionIdByName(value) || value : value)
+          return this.options?.length > 0 ? this.getOptionIdByName(value) || value : value
+        })
       )
       .subscribe(fn);
   }
@@ -101,7 +109,7 @@ export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
       filteredOptions = options.filter(option => option.name.toLowerCase().includes(filterValue));
     }
 
-    if (this.allowCustomValue && value != '') {
+    if (this.allowCustomValue() && value != '') {
       const isUniqueValue = filteredOptions.length === 0 || filteredOptions.findIndex((option: SelectOption) => option.name.toLowerCase() === filterValue) === -1
       if (isUniqueValue) {
         filteredOptions.unshift({id: null, name: value, isCustom: true});
@@ -119,6 +127,6 @@ export class AutocompleteComponent implements ControlValueAccessor, OnChanges {
   }
 
   private findOption(parameter: string, value: string): SelectOption {
-    return this.options?.find(option => option[parameter] === value);
+    return this.options()?.find(option => option[parameter] === value);
   }
 }

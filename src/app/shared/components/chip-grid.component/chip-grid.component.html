@@ -1,5 +1,5 @@
 <mat-form-field class="w-full">
-  <mat-label>{{fieldLabel}}</mat-label>
+  <mat-label>{{fieldLabel()}}</mat-label>
 
   <mat-chip-grid #chipGrid>
     @for (chip of selectedChips(); track $index) {
@@ -15,7 +15,7 @@
   <input
     #chipInput
     [(ngModel)]="currentChip"
-    [placeholder]="fieldPlaceholder || 'Enter ' + (fieldLabel | lowercase)"
+    [placeholder]="fieldPlaceholder() || 'Enter ' + (fieldLabel() | lowercase)"
     [matChipInputFor]="chipGrid"
     [matAutocomplete]="auto"
     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
@@ -28,9 +28,9 @@
   </mat-autocomplete>
 </mat-form-field>
 
-@if (fieldErrors != null && fieldErrors.length > 0) {
+@if (fieldErrors() != null && fieldErrors().length > 0) {
   <div class="field-errors">
-    @for (error of fieldErrors; track $index) {
+    @for (error of fieldErrors(); track $index) {
       <mat-error>{{error}}</mat-error>
     }
   </div>

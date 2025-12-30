@@ -2,10 +2,24 @@
   class="gm-data-loading-wrapper_page-wrapper"
   [loadingState]="authLoadingState()">
   <mat-toolbar class="flex justify-between">
-    <span>GM Vocabulary</span>
+    <span routerLink="/">GM Vocabulary</span>
     <div class="flex">
-      <button matButton routerLink="/words" [queryParams]="{groupId: defaultWordGroupsOptionValue}" routerLinkActive="text-active pointer-events-none" [routerLinkActiveOptions]="{ exact: true }">Words</button>
-      <button matButton routerLink="/collections" routerLinkActive="text-active" [routerLinkActiveOptions]="{ exact: true }">Collections</button>
+      <button
+        matButton
+        routerLink="/words"
+        [class.text-active]="isWordsPageActive()"
+        [class.pointer-events-none]="isWordsPageActive()">
+        My Words
+      </button>
+
+      <button
+        matButton
+        routerLink="/collections"
+        routerLinkActive="text-active pointer-events-none"
+        [routerLinkActiveOptions]="{ exact: true }">
+        Library
+      </button>
+
       <button matButton (click)="logout()">Logout</button>
     </div>
   </mat-toolbar>

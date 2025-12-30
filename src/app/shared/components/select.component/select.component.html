@@ -1,0 +1,9 @@
+<mat-form-field>
+  <mat-label>{{ fieldLabel() }}</mat-label>
+  <mat-select [value]="inputControl.value" (selectionChange)="inputControl.setValue($event.value)">
+    <mat-option [value]="defaultOptionValue">All</mat-option>
+    @for (option of options(); track option) {
+      <mat-option [value]="option.id">{{option.name}}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>

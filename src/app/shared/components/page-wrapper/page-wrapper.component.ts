@@ -1,11 +1,10 @@
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject, WritableSignal } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { Component, inject, WritableSignal } from '@angular/core';
 import { MatToolbar } from '@angular/material/toolbar';
 import { MatButton } from '@angular/material/button';
 
-import { DataLoadingWrapper } from '../data-loading-wrapper/data-loading-wrapper';
-import { DefaultOptionValueEnum } from '../../../enums/default-option-value.enum';
+import { DataLoadingWrapperComponent } from '../data-loading-wrapper/data-loading-wrapper.component';
 import { SubmitDialogComponent } from '../submit-dialog/submit-dialog.component';
 import { SubmitDialogData } from '../submit-dialog/submit-dialog-data';
 import { AuthService } from '../../../services/auth/auth.service';
@@ -16,20 +15,21 @@ import { AuthService } from '../../../services/auth/auth.service';
     MatToolbar,
     RouterOutlet,
     MatButton,
-    DataLoadingWrapper,
+    DataLoadingWrapperComponent,
     RouterLink,
     RouterLinkActive
   ],
   templateUrl: './page-wrapper.component.html',
   styleUrl: './page-wrapper.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class PageWrapperComponent {
   private authService = inject(AuthService);
   private dialog = inject(MatDialog);
+  private router = inject(Router);
   private logoutDialogRef: MatDialogRef<SubmitDialogComponent, boolean>;
 
   authLoadingState: WritableSignal<boolean> = this.authService.authLoadingState;
-  defaultWordGroupsOptionValue = DefaultOptionValueEnum.GROUP_ID;
 
   logout(): void {
     this.logoutDialogRef = this.dialog.open<SubmitDialogComponent, SubmitDialogData, boolean>(SubmitDialogComponent, {
@@ -44,5 +44,17 @@ export class PageWrapperComponent {
         this.authService.logout();
       }
     });
+  }
+
+  isWordsPageActive(): boolean {
+    return this.router.isActive(
+      '/words',
+      {
+        paths: 'subset',
+        queryParams: 'ignored',
+        fragment: 'ignored',
+        matrixParams: 'ignored'
+      }
+    );
   }
 }

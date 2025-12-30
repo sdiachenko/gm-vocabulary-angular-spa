@@ -1,3 +1,3 @@
 export enum DefaultOptionValueEnum {
-  GROUP_ID = 'ALL'
+  ALL = 'ALL',
 }

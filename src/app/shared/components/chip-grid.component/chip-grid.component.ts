@@ -13,9 +13,13 @@ import {
 } from '@angular/material/autocomplete';
 import { map } from 'rxjs';
 import {
+  ChangeDetectionStrategy,
   Component,
-  computed, DestroyRef, inject,
-  Input, model,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  model,
   OnChanges,
   Self,
   signal,
@@ -46,14 +50,15 @@ import { SelectOption } from '../../interfaces/select-option';
   ],
   templateUrl: './chip-grid.component.html',
   styleUrl: './chip-grid.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ChipGridComponent implements ControlValueAccessor, OnChanges {
   private readonly destroyRef = inject(DestroyRef);
 
-  @Input() fieldLabel: string;
-  @Input() fieldPlaceholder: string;
-  @Input() fieldErrors: string[];
-  @Input() chips: SelectOption[];
+  fieldLabel = input(null);
+  fieldPlaceholder = input(null);
+  fieldErrors = input([]);
+  chips = input([]);
 
   inputControl: UntypedFormControl;
   readonly currentChip = model('');
@@ -83,7 +88,7 @@ export class ChipGridComponent implements ControlValueAccessor, OnChanges {
   }
 
   writeValue(chips: string) {
-    this.inputControl.setValue(chips ?? '');
+    this.inputControl.setValue(chips ?? '', {emitEvent: false});
   }
 
   registerOnChange(fn: any): void {
@@ -138,7 +143,7 @@ export class ChipGridComponent implements ControlValueAccessor, OnChanges {
   }
 
   private findChip(parameter: string, value: string): SelectOption {
-    return this.chips?.find(chip => chip[parameter] === value);
+    return this.chips()?.find(chip => chip[parameter] === value);
   }
 
   add(event: MatChipInputEvent): void {

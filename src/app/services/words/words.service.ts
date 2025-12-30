@@ -15,6 +15,8 @@ export class WordsService {
   private readonly wordsStore = inject(WordsStore);
 
   readonly words: Signal<Word[]> = this.wordsStore.words;
+  readonly filteredWords: Signal<Word[]> = this.wordsStore.filteredWords;
+  readonly selectedGroupId: Signal<string> = this.wordsStore.groupId;
 
   fetchIsLoading: WritableSignal<boolean> = signal(false);
   fetchError: WritableSignal<Error> = signal(null);
@@ -33,11 +35,11 @@ export class WordsService {
 
     return this.wordsApiService.getWords().pipe(
       tap(result => {
-        this.wordsStore.addWords(result);
+        this.addWords(result);
         updateRequestState(null, false)
       }),
       catchError(err => {
-        updateRequestState(err, false)
+        updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -51,7 +53,7 @@ export class WordsService {
         this.updateRequestState(null, false)
       }),
       catchError(err => {
-        this.updateRequestState(err, false)
+        this.updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -68,7 +70,7 @@ export class WordsService {
         this.updateRequestState(null, false)
       }),
       catchError(err => {
-        this.updateRequestState(err, false)
+        this.updateRequestState(new Error(err.error?.message ?? err.message), false)
         return throwError(err);
       })
     );
@@ -87,13 +89,15 @@ export class WordsService {
         updateRequestState(null, false)
       }),
       catchError(err => {
-        updateRequestState(err, false);
+        updateRequestState(new Error(err.error?.message ?? err.message), false);
         return throwError(err);
       })
     );
   }
 
+  filterByGroupId = this.wordsStore.filterByGroupId;
   resetStore = this.wordsStore.resetStore;
+  addWords = this.wordsStore.addWords;
 
   private updateRequestState(error: Error, isLoading: boolean): void {
     this.updateError.set(error);

@@ -1,0 +1,26 @@
+<gm-data-loading-wrapper
+  [loadingState]="fetchIsLoading() || deleteIsLoading()"
+  [error]="fetchError() || deleteError()">
+  <div class="flex pb-6 items-center">
+    <h2 class="text-lg" [ngClass]="{'mr-4': isCollectionOwnerActive()}"><b>Collection:</b> {{selectedGroup()?.name}}</h2>
+    @if (isCollectionOwnerActive()) {
+      @if (selectedGroup().isShared) {
+        <mat-icon class="text-active mr-2" matTooltip="Collection visible for other users">share</mat-icon>
+      }
+      <button matMiniFab (click)="openEditWordGroupDialog()">
+        <mat-icon>edit</mat-icon>
+      </button>
+    }
+  </div>
+
+  <gm-words-table
+    [allowEdit]="isCollectionOwnerActive()"
+    [allowSwitchGroup]="false"
+    [dataSource]="wordsTable()"
+    [columns]="wordsTableColumns()"
+    [groups]="wordGroupOptions()"
+    (addWord)="openEditDialog()"
+    (editWord)="openEditDialog($event)"
+    (deleteWords)="deleteWords($event)"
+  ></gm-words-table>
+</gm-data-loading-wrapper>

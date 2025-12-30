@@ -3,7 +3,7 @@
 ## Tech Stack
 - Angular CLI v21
 - NgRx SignalStore
-- Node.js
+- Node.js / Next.js
 - MongoDB
 - Angular Material UI
 - Tailwind CSS

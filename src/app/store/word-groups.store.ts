@@ -5,10 +5,12 @@ import { WordGroup } from '../interfaces/word-group';
 
 export interface WordGroupsState {
   groups: WordGroup[];
+  sharedGroups: WordGroup[];
 }
 
 export const initialState: WordGroupsState = {
-  groups: []
+  groups: [],
+  sharedGroups: []
 }
 
 export const WordGroupsStore = signalStore(
@@ -23,6 +25,11 @@ export const WordGroupsStore = signalStore(
     addGroup(group: WordGroup) {
       patchState(store, {
         groups: [...store.groups(), group]
+      })
+    },
+    addSharedGroups(groups: WordGroup[]) {
+      patchState(store, {
+        sharedGroups: [...store.sharedGroups(), ...groups]
       })
     },
     updateGroup(group: WordGroup) {
